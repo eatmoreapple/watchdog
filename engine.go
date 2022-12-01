@@ -81,12 +81,7 @@ func (e *Engine) ListenAndServe() error {
 				_ = e.resultBackend.SetError(ctx, payload.TaskID, err)
 				return
 			}
-			data, err := e.marshaller.Marshal(result)
-			if err != nil {
-				_ = e.resultBackend.SetError(ctx, payload.TaskID, err)
-				return
-			}
-			_ = e.resultBackend.SetResult(ctx, payload.TaskID, data)
+			_ = e.resultBackend.SetResult(ctx, payload.TaskID, result)
 
 			if err = e.resultBackend.MarkState(ctx, payload.TaskID, StateDone); err != nil {
 				fmt.Println(err)

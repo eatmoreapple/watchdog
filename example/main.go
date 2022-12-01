@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/go-redis/redis/v9"
 	"time"
+
+	"github.com/go-redis/redis/v9"
+
 	"watchdog"
 )
 
@@ -14,9 +17,10 @@ type Result struct {
 
 type worker struct{}
 
-func (w *worker) Run(payload watchdog.Payload) (any, error) {
+func (w *worker) Run(payload watchdog.Payload) ([]byte, error) {
 	time.Sleep(time.Second)
-	return Result{Name: payload.TaskID}, nil
+	var result = Result{Name: payload.TaskID}
+	return json.Marshal(result)
 }
 
 func main() {
