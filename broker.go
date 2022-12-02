@@ -3,12 +3,12 @@ package watchdog
 import (
 	"context"
 	"errors"
-	"github.com/go-redis/redis/v9"
 	"time"
+
+	"github.com/eatmoreapple/redis"
 )
 
 type Broker interface {
-	Preparer
 	Publish(ctx context.Context, payload Payload) error
 	Subscribe(ctx context.Context) (<-chan Payload, error)
 }
@@ -42,15 +42,15 @@ func (r *RedisBroker) Subscribe(ctx context.Context) (<-chan Payload, error) {
 			case <-ctx.Done():
 				return
 			default:
-				data, err := r.client.BRPop(ctx, 5*time.Second, r.queue).Result()
-				if errors.Is(err, redis.Nil) {
+				_, data, err := r.client.BRPop(ctx, []string{r.queue}, 5*time.Second).Result()
+				if errors.Is(err, redis.ErrNil) {
 					continue
 				}
 				if err != nil {
 					return
 				}
 				var payload Payload
-				if err = r.Engine.marshaller.Unmarshal([]byte(data[1]), &payload); err != nil {
+				if err = r.Engine.marshaller.Unmarshal([]byte(data), &payload); err != nil {
 					return
 				}
 				ch <- payload

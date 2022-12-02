@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/eatmoreapple/redis"
 
 	"watchdog"
 )
@@ -24,9 +24,7 @@ func (w *worker) Run(payload watchdog.Payload) ([]byte, error) {
 }
 
 func main() {
-	client := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-	})
+	client := redis.NewClient(context.Background())
 
 	broker := watchdog.NewRedisBroker(client, "queue")
 
@@ -42,7 +40,7 @@ func main() {
 			}
 			if err := result.Cancel(context.Background()); err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
 			var loop = true
 			for loop {

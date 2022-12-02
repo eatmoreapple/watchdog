@@ -3,11 +3,11 @@ package watchdog
 import (
 	"context"
 	"errors"
-	"github.com/go-redis/redis/v9"
+
+	"github.com/eatmoreapple/redis"
 )
 
 type ResultBackend interface {
-	Preparer
 	// State returns the state of the given task id.
 	State(ctx context.Context, taskId string) (State, error)
 	// Result returns the result of the given task id.
@@ -35,7 +35,7 @@ func (r RedisResultBackend) Prepare(engine *Engine) {
 func (r RedisResultBackend) State(ctx context.Context, taskId string) (State, error) {
 	key := "watchdog:task:" + taskId + ":state"
 	state, err := r.redisClient.Get(ctx, key).Int64()
-	if err == redis.Nil {
+	if err == redis.ErrNil {
 		return StatePending, nil
 	}
 	if err != nil {
@@ -52,7 +52,7 @@ func (r RedisResultBackend) Result(ctx context.Context, taskId string) ([]byte, 
 func (r RedisResultBackend) Error(ctx context.Context, taskId string) error {
 	key := "watchdog:task:" + taskId + ":error"
 	msg, err := r.redisClient.Get(ctx, key).Result()
-	if err == redis.Nil {
+	if err == redis.ErrNil {
 		return nil
 	}
 	if err != nil {
@@ -68,7 +68,7 @@ func (r RedisResultBackend) SetError(ctx context.Context, taskId string, err err
 
 func (r RedisResultBackend) MarkState(ctx context.Context, taskId string, state State) error {
 	key := "watchdog:task:" + taskId + ":state"
-	return r.redisClient.Set(ctx, key, int64(state), 0).Err()
+	return r.redisClient.Set(ctx, key, int64(state)).Err()
 }
 
 func (r RedisResultBackend) Forget(ctx context.Context, taskId string) error {
@@ -78,7 +78,7 @@ func (r RedisResultBackend) Forget(ctx context.Context, taskId string) error {
 
 func (r RedisResultBackend) SetResult(ctx context.Context, taskId string, result []byte) error {
 	key := "watchdog:task:" + taskId + ":result"
-	return r.redisClient.Set(ctx, key, result, 0).Err()
+	return r.redisClient.Set(ctx, key, result).Err()
 }
 
 func NewRedisResultBackend(client *redis.Client) RedisResultBackend {

@@ -29,8 +29,12 @@ func NewEngine(broker Broker, resultBackend ResultBackend) *Engine {
 		broker:        broker,
 		idGenerator:   &uuidTaskIDGenerator{},
 	}
-	broker.Prepare(engine)
-	resultBackend.Prepare(engine)
+	if preparer, ok := resultBackend.(Preparer); ok {
+		preparer.Prepare(engine)
+	}
+	if preparer, ok := broker.(Preparer); ok {
+		preparer.Prepare(engine)
+	}
 	return engine
 }
 
